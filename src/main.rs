@@ -1,57 +1,37 @@
-use log::{error, info, warn, LevelFilter};
+use log::{error, info, LevelFilter};
 use serde::Deserialize;
 use simple_logger::SimpleLogger;
+use std::fs::File;
+use std::io::{BufReader, Read};
 use std::time::SystemTime;
 use xdg::BaseDirectories;
 
 const RELATIVE_CONFIG_PATH: &'static str = "reme/config.json";
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct EventTime {
     post: SystemTime,
-    beforehand: Option<SystemTime>,
+    warn: Option<SystemTime>,
 }
 
-impl EventTime {
-    fn new(post: SystemTime, beforehand: Option<SystemTime>) -> Self {
-        Self { post, beforehand }
-    }
-}
-
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 enum EventPriority {
     Low,
     Normal,
     Critical,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct EventMessage {
     main: String,
     additional: String,
 }
 
-impl EventMessage {
-    fn new(main: String, additional: String) -> Self {
-        Self { main, additional }
-    }
-}
-
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Event {
     time: EventTime,
     priority: EventPriority,
     message: EventMessage,
-}
-
-impl Event {
-    fn new(time: EventTime, priority: EventPriority, message: EventMessage) -> Self {
-        Self {
-            time,
-            priority,
-            message,
-        }
-    }
 }
 
 struct EventLogging(SimpleLogger);
@@ -78,12 +58,28 @@ fn main() {
     let cfg_dir =
         BaseDirectories::new().expect("unable to find XDG-compliant directory hierarchy!");
 
-    let cfg_json = match cfg_dir.find_config_file(RELATIVE_CONFIG_PATH) {
-        Some(json) => json,
-        None => EventLogging::panic("unable to find config file in directories!"),
-    };
+    let cfg_path = cfg_dir
+        .find_config_file(RELATIVE_CONFIG_PATH)
+        .unwrap_or_else(|| EventLogging::panic("unable to find config file in directories!"));
+    info!("config path is {:?}", &cfg_path);
+
+    // SAFETY: we've already checked this path for existence so
+    // it is totally safe to unwrap it like so
+    let cfg_file = unsafe { File::open(cfg_path).unwrap_unchecked() };
+    info!("config file state is {:?}", &cfg_file);
+
+    let mut cfg_str = String::new();
+    let mut cfg_reader = BufReader::new(cfg_file);
+
+    cfg_reader
+        .read_to_string(&mut cfg_str)
+        .unwrap_or_else(|_| EventLogging::panic("unable to read config file content"));
 
     // serialize json as `Event` struct
+    let event = serde_json::from_str::<Event>(cfg_str.as_str())
+        .unwrap_or_else(|_| EventLogging::panic("unable to deserialize config file content"));
+
+    dbg!(event);
 
     EventLogging::finish();
 }
