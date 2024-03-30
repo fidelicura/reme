@@ -12,7 +12,10 @@ impl EventLogging {
             false => LevelFilter::Info,
         };
 
-        SimpleLogger::new().with_level(log_mode).init().unwrap();
+        SimpleLogger::new()
+            .with_level(log_mode)
+            .init()
+            .unwrap_or_else(|err| panic!("failed to run logger because of {err}"));
         info!("logging started");
 
         if log_mode == LevelFilter::Debug {
