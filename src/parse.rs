@@ -20,6 +20,7 @@ impl Config {
         let cfg_str = Self::read(&cfg_file);
         debug!("config file content is\n{}", cfg_str);
 
+        info!("config parsing has finished fine");
         Self {
             file: cfg_file,
             data: cfg_str,

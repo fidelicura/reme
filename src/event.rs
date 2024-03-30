@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use log::{debug, info};
+use notify_rust::Notification;
 use serde::Deserialize;
 
 use crate::logging::EventLogging;
@@ -26,7 +27,7 @@ impl<'de> Deserialize<'de> for EventTimeWarn {
 
         let amount = raw_amount.parse::<u8>().unwrap_or_else(|err| {
             let msg = format!("deserialization of time value amount has failed because of {err}");
-            EventLogging::panic(msg.as_str());
+            EventLogging::panic(&msg);
         });
 
         Ok(match variant {
@@ -46,8 +47,8 @@ impl<'de> Deserialize<'de> for EventTimeWarn {
 
 #[derive(Debug, Deserialize)]
 struct EventTime {
-    post: NaiveDateTime,
-    warn: Option<EventTimeWarn>,
+    pub(crate) post: NaiveDateTime,
+    pub(crate) warn: Option<EventTimeWarn>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -62,15 +63,38 @@ enum EventPriority {
 
 #[derive(Debug, Deserialize)]
 struct EventMessage {
-    additional: Option<String>,
-    main: String,
+    pub(crate) additional: Option<String>,
+    pub(crate) main: String,
 }
 
 #[derive(Debug, Deserialize)]
-struct Event {
-    message: EventMessage,
-    priority: EventPriority,
-    time: EventTime,
+pub(crate) struct Event {
+    pub(crate) message: EventMessage,
+    pub(crate) priority: EventPriority,
+    pub(crate) time: EventTime,
+}
+
+impl Event {
+    pub(crate) fn notify(&self) {
+        let notif = if let Some(additional) = &self.message.additional {
+            Notification::new()
+                .summary(&self.message.main)
+                .body(&additional)
+                .show()
+                .unwrap_or_else(|err| {
+                    let msg = format!("failed to create notification because of {err}");
+                    EventLogging::panic(&msg);
+                })
+        } else {
+            Notification::new()
+                .summary(&self.message.main)
+                .show()
+                .unwrap_or_else(|err| {
+                    let msg = format!("failed to create notification because of {err}");
+                    EventLogging::panic(&msg);
+                })
+        };
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -82,12 +106,16 @@ impl Events {
     pub(crate) fn parse(raw_data: &str) -> Self {
         let events = toml::from_str(raw_data).unwrap_or_else(|err| {
             let msg = format!("unable to deserialize config file content: {err}");
-            EventLogging::panic(msg.as_str());
+            EventLogging::panic(&msg);
         });
 
-        info!("events parsed fine");
         debug!("events are {:?}", &events);
+        info!("events parse and deserialization has finished fine");
 
         events
+    }
+
+    pub(crate) fn events(&mut self) -> &mut Vec<Event> {
+        &mut self.event
     }
 }

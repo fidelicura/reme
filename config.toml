@@ -1,21 +1,11 @@
-# [[event]] <- necessary to indicate a new event
-# time.post = "STRING" <- when the event is considered finished (y-m-d or y-m-dTh-h-sZ ISO 8601 format with optional UTC declare) and last notification is displayed
-# time.warn = "STRING" <- OPTIONAL, remind every N time (seconds/minutes/days/weeks/months/years) or only once at specific time
-# priority = "STRING" <- notification state (low/normal/critical)
-# message.main = "STRING" <- header of notification
-# message.additional = "STRING" <- description of notification
-
-[[event]] # real event example
-time.post = "2023-03-14"
-time.warn = "30m"
+[[event]]
+time.post = "2023-03-14T00:00:00"
+time.warn = "30 minutes"
 priority = "low"
 message.main = "welcome!"
 message.additional = "welcoming text"
 
-[[event]] # multiple real events example
-time = { post = "2024-08-27T12:26:22Z" } # no warn here, because it optional as mentioned above
+[[event]]
+time.post = "2024-08-27T00:00:00"
 priority = "critical"
-message = {
-  main = "second new message",
-  additional = "some text of new message here"
-} # enhanced TOML scope is also supported
+message = { main = "second new message" }
