@@ -28,7 +28,7 @@ impl Config {
         // info!("events parsed fine");
         // debug!("events are: {:?}", event);
 
-        debug!("config file content is {}", cfg_str);
+        debug!("config file content is\n{}", cfg_str);
 
         Self {
             file: cfg_file,
