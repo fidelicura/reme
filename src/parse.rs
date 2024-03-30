@@ -31,7 +31,7 @@ impl Config {
             EventLogging::panic("unable to find XDG-compliant directory hierarchy!")
         });
         info!("config dir is fine");
-        debug!("config dir is {:?}", &cfg_dir);
+        debug!("config dir is {:?}", &cfg_dir.get_config_home());
 
         let cfg_path = cfg_dir
             .find_config_file(RELATIVE_CONFIG_PATH)

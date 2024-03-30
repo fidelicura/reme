@@ -1,17 +1,57 @@
+use chrono::NaiveDateTime;
 use log::{debug, info};
 use serde::Deserialize;
-use std::time::SystemTime;
 
 use crate::logging::EventLogging;
 
-#[derive(Debug, Deserialize)]
-pub(crate) struct EventTime {
-    post: SystemTime,
-    warn: Option<SystemTime>,
+#[derive(Debug)]
+enum EventTimeWarn {
+    Seconds(u8),
+    Minutes(u8),
+    Hours(u8),
+    Days(u8),
+    Weeks(u8),
+    Months(u8),
+    Years(u8),
+}
+
+impl<'de> Deserialize<'de> for EventTimeWarn {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value: String = Deserialize::deserialize(deserializer)?;
+        let splitted = value.split_whitespace().collect::<Vec<&str>>();
+        let (raw_amount, variant) = (splitted[0], splitted[1]);
+
+        let amount = raw_amount.parse::<u8>().unwrap_or_else(|err| {
+            let msg = format!("deserialization of time value amount has failed because of {err}");
+            EventLogging::panic(msg.as_str());
+        });
+
+        Ok(match variant {
+            "second" | "seconds" => EventTimeWarn::Seconds(amount),
+            "minute" | "minutes" => EventTimeWarn::Minutes(amount),
+            "hour" | "hours" => EventTimeWarn::Hours(amount),
+            "day" | "days" => EventTimeWarn::Days(amount),
+            "week" | "weeks" => EventTimeWarn::Weeks(amount),
+            "month" | "months" => EventTimeWarn::Months(amount),
+            "year" | "years" => EventTimeWarn::Years(amount),
+            _ => {
+                EventLogging::panic("unable to deserialize specified time warn time variant format")
+            }
+        })
+    }
 }
 
 #[derive(Debug, Deserialize)]
-pub(crate) enum EventPriority {
+struct EventTime {
+    post: NaiveDateTime,
+    warn: Option<EventTimeWarn>,
+}
+
+#[derive(Debug, Deserialize)]
+enum EventPriority {
     #[serde(rename = "low")]
     Low,
     #[serde(rename = "normal")]
@@ -21,27 +61,32 @@ pub(crate) enum EventPriority {
 }
 
 #[derive(Debug, Deserialize)]
-pub(crate) struct EventMessage {
+struct EventMessage {
+    additional: Option<String>,
     main: String,
-    additional: String,
 }
 
 #[derive(Debug, Deserialize)]
-pub(crate) struct Event {
-    time: EventTime,
-    priority: EventPriority,
+struct Event {
     message: EventMessage,
+    priority: EventPriority,
+    time: EventTime,
 }
 
-impl Event {
-    pub(crate) fn parse(data: &str) -> Vec<Self> {
-        let events = toml::from_str(data).unwrap_or_else(|err| {
+#[derive(Debug, Deserialize)]
+pub(crate) struct Events {
+    event: Vec<Event>,
+}
+
+impl Events {
+    pub(crate) fn parse(raw_data: &str) -> Self {
+        let events = toml::from_str(raw_data).unwrap_or_else(|err| {
             let msg = format!("unable to deserialize config file content: {err}");
             EventLogging::panic(msg.as_str());
         });
 
         info!("events parsed fine");
-        debug!("events are: {:?}", &events);
+        debug!("events are {:?}", &events);
 
         events
     }
