@@ -1,4 +1,4 @@
-use log::info;
+use log::{debug, info};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use xdg::BaseDirectories;
@@ -27,6 +27,8 @@ impl Config {
 
         // info!("events parsed fine");
         // debug!("events are: {:?}", event);
+
+        debug!("config file content is {}", cfg_str);
 
         Self {
             file: cfg_file,
