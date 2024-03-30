@@ -16,10 +16,8 @@ pub(crate) struct Config {
 impl Config {
     pub(crate) fn parse() -> Self {
         let cfg_file = Self::file();
+
         let cfg_str = Self::read(&cfg_file);
-
-        info!("config file and config string are fine");
-
         debug!("config file content is\n{}", cfg_str);
 
         Self {
@@ -32,17 +30,20 @@ impl Config {
         let cfg_dir = BaseDirectories::new().unwrap_or_else(|_| {
             EventLogging::panic("unable to find XDG-compliant directory hierarchy!")
         });
-        info!("config dir is {:?}", &cfg_dir);
+        info!("config dir is fine");
+        debug!("config dir is {:?}", &cfg_dir);
 
         let cfg_path = cfg_dir
             .find_config_file(RELATIVE_CONFIG_PATH)
             .unwrap_or_else(|| EventLogging::panic("unable to find config file in directories!"));
-        info!("config path is {:?}", &cfg_path);
+        info!("config path is fine");
+        debug!("config path is {:?}", &cfg_path);
 
         // SAFETY: we've already checked this path for existence so
         // it is totally safe to unwrap it like so
         let cfg_file = unsafe { File::open(cfg_path).unwrap_unchecked() };
-        info!("config file state is {:?}", &cfg_file);
+        info!("config file state is fine");
+        debug!("config file state is {:?}", &cfg_file);
 
         cfg_file
     }
@@ -54,7 +55,8 @@ impl Config {
         cfg_reader
             .read_to_string(&mut cfg_str)
             .unwrap_or_else(|_| EventLogging::panic("unable to read config file content"));
-        info!("config reader state is {:?}", &cfg_reader);
+        info!("config reader state is fine");
+        debug!("config reader state is {:?}", &cfg_reader);
 
         cfg_str
     }
