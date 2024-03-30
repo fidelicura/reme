@@ -5,7 +5,7 @@ use xdg::BaseDirectories;
 
 use crate::logging::EventLogging;
 
-const RELATIVE_CONFIG_PATH: &'static str = "reme/config.json";
+const RELATIVE_CONFIG_PATH: &'static str = "reme/config.toml";
 
 #[derive(Debug)]
 pub(crate) struct Config {

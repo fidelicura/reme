@@ -12,8 +12,11 @@ pub(crate) struct EventTime {
 
 #[derive(Debug, Deserialize)]
 pub(crate) enum EventPriority {
+    #[serde(rename = "low")]
     Low,
+    #[serde(rename = "normal")]
     Normal,
+    #[serde(rename = "critical")]
     Critical,
 }
 
@@ -32,7 +35,7 @@ pub(crate) struct Event {
 
 impl Event {
     pub(crate) fn parse(data: &str) -> Vec<Self> {
-        let events: Vec<Self> = serde_json::from_str(data).unwrap_or_else(|err| {
+        let events = toml::from_str(data).unwrap_or_else(|err| {
             let msg = format!("unable to deserialize config file content: {err}");
             EventLogging::panic(msg.as_str());
         });

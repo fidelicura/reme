@@ -1,0 +1,20 @@
+# [event] <- necessary to indicate an event
+# time.post = "STRING" <- when the event is considered finished (y-m-d or y-m-dTh-h-sZ ISO 8601 format with optional UTC declare) and last notification is displayed
+# time.warn = "STRING" <- remind every N time (seconds/minutes/days/weeks/months/years) or only once at specific time
+# priority = "STRING" <- notification state (low/normal/critical)
+# message.main = "STRING" <- header of notification
+# message.additional = "STRING" <- description of notification
+
+[event] # real event example
+time.post = "2023-03-14"
+time.warn = "30m"
+priority = "critical"
+message.main = ""
+message.additional = ""
+
+[event] # multiple real events example
+time.post = "2024-08-27T12:26:22Z"
+time.warn = "12:34:50Z"
+priority = "critical"
+message.main = ""
+message.additional = ""
