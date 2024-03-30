@@ -13,6 +13,11 @@ priority = "low" # notification priority (just in case you want some notificatio
 message.main = "welcome!" # header of notification
 message.additional = "welcoming text" # body of notification
 
+# OPTIONAL:
+# time.warn - defaults to never warn, just notify at the post time
+# priority - default to "low"
+# message.additional = default to no body message of notification
+
 [[event]] # example of shortened toml format that also works
 time.post = "2024-08-27T00:00:00"
 priority = "critical"

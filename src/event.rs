@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
 use log::{debug, info};
-use notify_rust::Notification;
+use notify_rust::{Notification, Urgency};
 use serde::Deserialize;
 
 use crate::logging::EventLogging;
 
 #[derive(Debug)]
-enum EventTimeWarn {
+pub(crate) enum EventTimeWarn {
     Seconds(u8),
     Minutes(u8),
     Hours(u8),
@@ -46,13 +46,14 @@ impl<'de> Deserialize<'de> for EventTimeWarn {
 }
 
 #[derive(Debug, Deserialize)]
-struct EventTime {
+pub(crate) struct EventTime {
     pub(crate) post: NaiveDateTime,
     pub(crate) warn: Option<EventTimeWarn>,
 }
 
-#[derive(Debug, Deserialize)]
-enum EventPriority {
+#[derive(Default, Debug, Deserialize)]
+pub(crate) enum EventPriority {
+    #[default]
     #[serde(rename = "low")]
     Low,
     #[serde(rename = "normal")]
@@ -61,8 +62,18 @@ enum EventPriority {
     Critical,
 }
 
+impl EventPriority {
+    pub(crate) fn urgency(&self) -> Urgency {
+        match self {
+            Self::Low => Urgency::Low,
+            Self::Normal => Urgency::Normal,
+            Self::Critical => Urgency::Critical,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
-struct EventMessage {
+pub(crate) struct EventMessage {
     pub(crate) additional: Option<String>,
     pub(crate) main: String,
 }
@@ -70,30 +81,48 @@ struct EventMessage {
 #[derive(Debug, Deserialize)]
 pub(crate) struct Event {
     pub(crate) message: EventMessage,
-    pub(crate) priority: EventPriority,
+    pub(crate) priority: Option<EventPriority>,
     pub(crate) time: EventTime,
 }
 
 impl Event {
     pub(crate) fn notify(&self) {
-        let notif = if let Some(additional) = &self.message.additional {
-            Notification::new()
-                .summary(&self.message.main)
-                .body(&additional)
-                .show()
-                .unwrap_or_else(|err| {
-                    let msg = format!("failed to create notification because of {err}");
-                    EventLogging::panic(&msg);
-                })
-        } else {
-            Notification::new()
-                .summary(&self.message.main)
-                .show()
-                .unwrap_or_else(|err| {
-                    let msg = format!("failed to create notification because of {err}");
-                    EventLogging::panic(&msg);
-                })
-        };
+        let mut basic_notif = Notification::new().summary(&self.message.main).clone();
+
+        let is_set_additional = &self.message.additional.is_some();
+        let is_set_priority = &self.priority.is_some();
+
+        unsafe {
+            match (is_set_additional, is_set_priority) {
+                // SAFETY: both additionoal and priorities are presented
+                (true, true) => {
+                    let additional = &self.message.additional.as_ref().unwrap_unchecked();
+                    let priority = &self.priority.as_ref().unwrap_unchecked();
+                    basic_notif.body(additional).urgency(priority.urgency());
+                }
+                // SAFETY: additional is presented, priority is not
+                (true, false) => {
+                    let additional = &self.message.additional.as_ref().unwrap_unchecked();
+                    basic_notif
+                        .body(additional)
+                        .urgency(EventPriority::default().urgency());
+                }
+                // SAFETY: additional is not presented, priority is
+                (false, true) => {
+                    let priority = &self.priority.as_ref().unwrap_unchecked();
+                    basic_notif.urgency(priority.urgency());
+                }
+                // SAFETY: both additional and priority are not presented
+                (false, false) => {
+                    basic_notif.urgency(EventPriority::default().urgency());
+                }
+            }
+        }
+
+        basic_notif.show().unwrap_or_else(|err| {
+            let msg = format!("failed to create notification because of {err}");
+            EventLogging::panic(&msg);
+        });
     }
 }
 
@@ -109,7 +138,7 @@ impl Events {
             EventLogging::panic(&msg);
         });
 
-        debug!("events are {:?}", &events);
+        debug!("events are {:#?}", &events);
         info!("events parse and deserialization has finished fine");
 
         events
