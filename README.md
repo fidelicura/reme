@@ -18,7 +18,7 @@ message.additional = "welcoming text" # body of notification
 # priority - default to "low"
 # message.additional = default to no body message of notification
 
-[[event]] # example of shortened toml format that also works
+[[event]] # example that shows shortened toml format also works
 time.post = "2024-08-27T00:00:00"
 priority = "critical"
 message = { main = "second new message" }
