@@ -16,7 +16,7 @@ impl EventLogging {
         info!("logging started");
 
         if log_mode == LevelFilter::Debug {
-            debug!("test");
+            debug!("app started in debug mode");
         }
     }
 
