@@ -20,14 +20,6 @@ impl Config {
 
         info!("config file and config string are fine");
 
-        // let event = serde_json::from_str::<Event>(cfg_str.as_str()).unwrap_or_else(|err| {
-        //     let msg = format!("unable to deserialize config file content: {err}");
-        //     EventLogging::panic(msg.as_str());
-        // });
-
-        // info!("events parsed fine");
-        // debug!("events are: {:?}", event);
-
         debug!("config file content is\n{}", cfg_str);
 
         Self {
@@ -65,5 +57,9 @@ impl Config {
         info!("config reader state is {:?}", &cfg_reader);
 
         cfg_str
+    }
+
+    pub(crate) fn data(&self) -> &str {
+        self.data.as_str()
     }
 }
