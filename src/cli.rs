@@ -1,6 +1,6 @@
 use std::env;
 
-const DEBUG_FLAG_PATTERN: [&str; 4] = ["-dbg", "-debug", "--dbg", "--debug"];
+const DEBUG_FLAG_PATTERN: [&str; 6] = ["dbg", "-dbg", "--dbg", "debug", "-debug", "--debug"];
 
 pub(crate) struct Cli;
 
