@@ -26,3 +26,4 @@ message = { main = "second new message" }
 
 # Roadmap
 - [ ] create/delete events at runtime;
+- [ ] warn events before X time the events posts;
