@@ -26,4 +26,5 @@ message = { main = "second new message" }
 
 # Roadmap
 - [ ] create/delete events at runtime;
+- [ ] logging into XDG-compliant file;
 - [ ] warn events before X time the events posts;
